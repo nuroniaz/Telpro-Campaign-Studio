@@ -24,6 +24,7 @@ interface DashboardViewProps {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ setActiveTab }) => {
   const {
+    campaigns,
     selectedCampaign,
     trends,
     events,
@@ -55,79 +56,205 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ setActiveTab }) =>
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
-      {/* Top Banner: Active Campaign Context */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-rose-950 border border-slate-800 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-rose-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-rose-400 mb-2">
-              <span className="px-2 py-0.5 rounded-full bg-rose-950/80 border border-rose-800/60 uppercase tracking-wider text-[10px]">
-                Active Campaign Snapshot
+      {/* Clean E2E Starter Onboarding Banner */}
+      {(!selectedCampaign || campaigns.length === 0) && (
+        <div className="p-6 rounded-3xl bg-gradient-to-r from-rose-950 via-slate-900 to-indigo-950 border border-rose-800 shadow-2xl space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-rose-800/60 pb-4">
+            <div>
+              <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white font-bold text-[10px] uppercase tracking-wider">
+                CLEAN E2E TEST MODE ACTIVE
               </span>
-              <span>•</span>
-              <span className="text-slate-300">Periode: {selectedCampaign?.periodStart} s/d {selectedCampaign?.periodEnd}</span>
+              <h1 className="text-xl font-black text-white mt-2">Mulai Pengujian Workflow End-to-End</h1>
+              <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                Seluruh data dummy telah dikosongkan. Anda dapat membuat campaign pertama untuk mencoba alur kerja dari <strong>01 Strategy → 02 Campaign → 03 Discover → 04 Create → 05 Review & Publish → 06 Performance</strong>.
+              </p>
             </div>
-            <h1 className="text-2xl font-extrabold text-white tracking-tight">{selectedCampaign?.name}</h1>
-            <p className="text-slate-300 text-xs mt-1 max-w-3xl leading-relaxed">
-              <span className="font-semibold text-slate-200">Strategic Business Objective:</span> {selectedCampaign?.businessObjective}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={() => setActiveTab('content-aipartner')}
-              className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-xs shadow-lg shadow-rose-900/30 flex items-center gap-2 transition-all hover:scale-105"
-            >
-              <BrainCircuit className="w-4 h-4" />
-              Mulai Diskusi AI Content Partner
-            </button>
             <button
               onClick={() => setActiveTab('strategy-campaigns')}
-              className="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+              className="px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-xl shadow-rose-900/50 flex items-center gap-2 transition-transform hover:scale-105 shrink-0"
             >
-              Kelola Plan
+              <Sparkles className="w-4 h-4 fill-white" />
+              + Buat Campaign Pertama (Step 1 E2E)
             </button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-2 text-center text-[10px]">
+            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-rose-300 font-bold">1. Buat Campaign</div>
+            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">2. Cari Trend/Opp</div>
+            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">3. AI Content Brief</div>
+            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">4. Storyboard & Video</div>
+            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">5. Review & Approval</div>
+            <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">6. Publish & Analytics</div>
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 1 — MY WORK / ACTION CENTER (Redesign V2 - Section 8.1) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-extrabold text-white flex items-center gap-2">
+            <Zap className="w-4 h-4 text-rose-400" /> My Work / Action Center
+          </h2>
+          <span className="text-[11px] text-slate-400">Pusat tugas yang memerlukan perhatian & keputusan langsung</span>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <button
+            onClick={() => setActiveTab('gov-approvals')}
+            className="p-4 rounded-2xl bg-rose-950/40 hover:bg-rose-950/70 border border-rose-800/80 transition-all text-left group shadow-lg"
+          >
+            <div className="flex items-center justify-between text-rose-300">
+              <span className="text-2xl font-black">2</span>
+              <AlertTriangle className="w-5 h-5 text-rose-400 group-hover:scale-110 transition-transform" />
+            </div>
+            <div className="text-xs font-bold text-white mt-1">Revision Required</div>
+            <div className="text-[10px] text-rose-300/80 mt-0.5">Naskah perlu revisi dari reviewer</div>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('gov-approvals')}
+            className="p-4 rounded-2xl bg-amber-950/40 hover:bg-amber-950/70 border border-amber-800/80 transition-all text-left group shadow-lg"
+          >
+            <div className="flex items-center justify-between text-amber-300">
+              <span className="text-2xl font-black">{pendingApprovals.length || 3}</span>
+              <ShieldCheck className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
+            </div>
+            <div className="text-xs font-bold text-white mt-1">Approvals Near Deadline</div>
+            <div className="text-[10px] text-amber-300/80 mt-0.5">SLA warning dalam 2 jam</div>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('intel-opportunities')}
+            className="p-4 rounded-2xl bg-cyan-950/40 hover:bg-cyan-950/70 border border-cyan-800/80 transition-all text-left group shadow-lg"
+          >
+            <div className="flex items-center justify-between text-cyan-300">
+              <span className="text-2xl font-black">1</span>
+              <TrendingUp className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
+            </div>
+            <div className="text-xs font-bold text-white mt-1">Opportunity Expiring</div>
+            <div className="text-[10px] text-cyan-300/80 mt-0.5">Publishing window tersisa 24j</div>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('act-publishing')}
+            className="p-4 rounded-2xl bg-emerald-950/40 hover:bg-emerald-950/70 border border-emerald-800/80 transition-all text-left group shadow-lg"
+          >
+            <div className="flex items-center justify-between text-emerald-300">
+              <span className="text-2xl font-black">{campaignContents.filter(c => c.status === 'Approved').length || 4}</span>
+              <Rocket className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
+            </div>
+            <div className="text-xs font-bold text-white mt-1">Ready to Publish</div>
+            <div className="text-[10px] text-emerald-300/80 mt-0.5">Sudah lolos QA & approved</div>
+          </button>
+        </div>
+      </div>
+
+      {/* SECTION 2 & 3 — CAMPAIGN IN FOCUS & NEXT BEST ACTION (Redesign V2 - Section 8.2 & 8.3) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Campaign in Focus with Stage Lifecycle Indicator */}
+        <div className="lg:col-span-2 p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-5">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-rose-400 mb-1">
+                <span className="px-2 py-0.5 rounded-md bg-rose-950 border border-rose-800 text-[10px] uppercase font-bold">
+                  Campaign in Focus
+                </span>
+                <span>• Owner: Marcom Lead</span>
+              </div>
+              <h1 className="text-xl font-black text-white tracking-tight">{selectedCampaign?.name}</h1>
+              <p className="text-xs text-slate-300 mt-1">
+                <strong className="text-slate-100">Objective:</strong> {selectedCampaign?.businessObjective}
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveTab('strategy-campaigns')}
+              className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors shrink-0"
+            >
+              Detail Campaign
+            </button>
+          </div>
+
+          {/* Current Stage Lifecycle Visual Progress (Section 8.2) */}
+          <div className="space-y-2">
+            <div className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Campaign Stage Lifecycle Progress:</div>
+            <div className="grid grid-cols-6 gap-2 text-center text-[10px] font-bold">
+              <div className="p-2 rounded-xl bg-emerald-950/80 border border-emerald-800 text-emerald-300">
+                ✓ Plan
+              </div>
+              <div className="p-2 rounded-xl bg-emerald-950/80 border border-emerald-800 text-emerald-300">
+                ✓ Discover
+              </div>
+              <div className="p-2 rounded-xl bg-rose-950 border-2 border-rose-500 text-rose-200 shadow-lg shadow-rose-900/50 relative">
+                ● Create
+                <span className="block text-[8px] text-rose-400 font-normal">YOU ARE HERE</span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-500">
+                ○ Review
+              </div>
+              <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-500">
+                ○ Publish
+              </div>
+              <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-500">
+                ○ Measure
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Quick KPI Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800/80">
-          <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
-            <div className="text-[11px] text-slate-400 font-medium flex items-center justify-between">
-              <span>MQL & WA Clicks</span>
-              <Rocket className="w-3.5 h-3.5 text-rose-400" />
+        {/* Section 3: Next Best Action Card (Single Prominent Action - Section 8.3) */}
+        <div className="p-6 rounded-3xl bg-gradient-to-br from-rose-950/90 via-slate-900 to-indigo-950 border border-rose-800 shadow-2xl flex flex-col justify-between space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-rose-600 text-white font-bold text-[10px] tracking-wider uppercase">
+                NEXT BEST ACTION
+              </span>
+              <span className="text-[11px] text-rose-300 font-medium">TELPRO AI Agentic Guidance</span>
             </div>
-            <div className="text-xl font-bold text-white mt-1">{totalWA > 0 ? totalWA : 530} <span className="text-xs text-emerald-400 font-normal">+18% vs target</span></div>
-            <div className="text-[10px] text-slate-500 mt-0.5">{totalLP > 0 ? totalLP : 3050} Total Landing Page Views</div>
+            <h3 className="text-base font-bold text-white">Visual Storyboard Scene #3 Belum Selesai</h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              3 dari 6 scene video telah disiapkan. Lanjutkan penyusunan storyboard agar naskah promosi dapat masuk ke tahap AI Video & Review Queue tepat waktu.
+            </p>
           </div>
 
-          <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
-            <div className="text-[11px] text-slate-400 font-medium flex items-center justify-between">
-              <span>Anggaran Terpakai</span>
-              <Coins className="w-3.5 h-3.5 text-amber-400" />
-            </div>
+          <button
+            onClick={() => setActiveTab('content-storyboard')}
+            className="w-full py-3 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-xl shadow-rose-900/50 transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+          >
+            <Sparkles className="w-4 h-4 fill-white" />
+            Lanjutkan Visual Storyboard Sekarang
+          </button>
+        </div>
+      </div>
+
+      {/* SECTION 4 — PERFORMANCE SNAPSHOT (Redesign V2 - Section 8.4) */}
+      <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
+        <h2 className="text-xs font-extrabold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+          <Target className="w-4 h-4 text-emerald-400" /> Performance Snapshot (Target vs Actual)
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+            <div className="text-[11px] text-slate-400 font-medium">MQL & WA Clicks</div>
+            <div className="text-xl font-bold text-white mt-1">{totalWA > 0 ? totalWA : 530} <span className="text-xs text-emerald-400 font-normal">+18%</span></div>
+            <div className="text-[10px] text-slate-500 mt-0.5">{totalLP > 0 ? totalLP : 3050} Total LP Views</div>
+          </div>
+
+          <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+            <div className="text-[11px] text-slate-400 font-medium">Anggaran Terpakai</div>
             <div className="text-xl font-bold text-white mt-1">Rp {(totalSpent / 1000000).toFixed(1)}Jt</div>
             <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2">
               <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: `${budgetPercentage}%` }} />
             </div>
           </div>
 
-          <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
-            <div className="text-[11px] text-slate-400 font-medium flex items-center justify-between">
-              <span>Pipeline Konten</span>
-              <Layers className="w-3.5 h-3.5 text-indigo-400" />
-            </div>
+          <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+            <div className="text-[11px] text-slate-400 font-medium">Pipeline Konten</div>
             <div className="text-xl font-bold text-white mt-1">{campaignContents.length} Paket</div>
-            <div className="text-[10px] text-slate-500 mt-0.5">{campaignContents.filter(c => c.status === 'Approved' || c.status === 'Published').length} Siap / Diterbitkan</div>
+            <div className="text-[10px] text-slate-500 mt-0.5">{campaignContents.filter(c => c.status === 'Approved' || c.status === 'Published').length} Approved / Published</div>
           </div>
 
-          <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
-            <div className="text-[11px] text-slate-400 font-medium flex items-center justify-between">
-              <span>SLA Approval Queue</span>
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            </div>
-            <div className="text-xl font-bold text-white mt-1">{pendingApprovals.length} Menunggu</div>
-            <div className="text-[10px] text-emerald-400 mt-0.5">Rata-rata cycle: 3.2 Jam</div>
+          <div className="bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+            <div className="text-[11px] text-slate-400 font-medium">SLA Cycle Time</div>
+            <div className="text-xl font-bold text-emerald-400 mt-1">3.2 Jam</div>
+            <div className="text-[10px] text-slate-500 mt-0.5">Target SLA: &lt; 24 Jam</div>
           </div>
         </div>
       </div>

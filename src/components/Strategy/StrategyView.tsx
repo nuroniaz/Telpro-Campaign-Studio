@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Campaign, ContentItem } from '../../types';
-import { Target, Layers, FileText, Calendar, Plus, Briefcase, CheckCircle2, ShieldAlert, Sparkles, Filter } from 'lucide-react';
+import { Target, Layers, FileText, Calendar, Plus, Briefcase, CheckCircle2, ShieldAlert, Sparkles, Filter, Lock } from 'lucide-react';
 import { NavTab } from '../Sidebar';
+import { RbacBanner } from '../Common/RbacBanner';
+import { hasPermission } from '../../utils/rbac';
 
 interface StrategyViewProps {
   activeTab?: NavTab;
@@ -10,7 +12,8 @@ interface StrategyViewProps {
 }
 
 export const StrategyView: React.FC<StrategyViewProps> = ({ activeTab }) => {
-  const { campaigns, addCampaign, contents, selectedCampaign } = useApp();
+  const { campaigns, addCampaign, contents, selectedCampaign, activeUser } = useApp();
+  const canCreate = hasPermission(activeUser.role, 'canCreateCampaign');
 
   let subTab: 'context' | 'monthly' | 'campaigns' | 'contentplan' = 'context';
   if (activeTab === 'strategy-monthly') subTab = 'monthly';
@@ -57,14 +60,17 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ activeTab }) => {
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <Target className="w-5 h-5 text-rose-500" />
-            Strategy & Campaign Planning
-          </h1>
-          <p className="text-xs text-slate-400 mt-0.5">Pengelolaan profil brand, target bulanan, rencana campaign, & content calendar canonical</p>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h1 className="text-xl font-bold text-white flex items-center gap-2">
+              <Target className="w-5 h-5 text-rose-500" />
+              Strategy & Campaign Planning
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">Pengelolaan profil brand, target bulanan, rencana campaign, & content calendar canonical</p>
+          </div>
         </div>
+        <RbacBanner moduleName="Strategy & Planning" requiredAction="canCreateCampaign" requiredRole="ROLE_STRATEGY_LEAD / ROLE_SYSTEM_ADMIN" />
       </div>
 
       {/* Tab 1: Business & Brand Context */}
@@ -189,10 +195,19 @@ export const StrategyView: React.FC<StrategyViewProps> = ({ activeTab }) => {
             <h2 className="text-sm font-bold text-white">Daftar Campaign Aktif & Rencana ({campaigns.length})</h2>
             <button
               id="create-new-campaign-btn"
-              onClick={() => setShowShowNewCampaignModal(true)}
-              className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-rose-900/30 transition-all hover:scale-105"
+              disabled={!canCreate}
+              onClick={() => {
+                if (canCreate) setShowShowNewCampaignModal(true);
+              }}
+              title={canCreate ? 'Buat Campaign Baru' : `Akses Terbatas: Role Anda (${activeUser.role.replace('ROLE_', '')}) tidak memiliki hak membuat campaign.`}
+              className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-lg transition-all ${
+                canCreate
+                  ? 'bg-rose-600 hover:bg-rose-500 text-white cursor-pointer hover:scale-105 shadow-rose-900/30'
+                  : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-70'
+              }`}
             >
-              <Plus className="w-4 h-4" /> Buat Campaign Baru
+              {canCreate ? <Plus className="w-4 h-4" /> : <Lock className="w-4 h-4 text-slate-400" />}
+              {canCreate ? 'Buat Campaign Baru' : 'Buat Campaign (Akses Terbatas)'}
             </button>
           </div>
 

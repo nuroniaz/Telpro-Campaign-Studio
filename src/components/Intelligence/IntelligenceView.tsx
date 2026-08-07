@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Trend, EventItem, Opportunity, Evidence, AudioRightsStatus } from '../../types';
 import { NavTab } from '../Sidebar';
+import { RbacBanner } from '../Common/RbacBanner';
+import { hasPermission } from '../../utils/rbac';
 import {
   Compass,
   TrendingUp,
@@ -37,6 +39,8 @@ export const IntelligenceView: React.FC<IntelligenceViewProps> = ({ activeTab, s
     createOpportunity,
     evidences,
     addEvidence,
+    addContentWithVersion,
+    activeUser,
     selectedCampaign
   } = useApp();
 
@@ -82,14 +86,17 @@ export const IntelligenceView: React.FC<IntelligenceViewProps> = ({ activeTab, s
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-3">
-        <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <Compass className="w-5 h-5 text-cyan-400" />
-            Intelligence Layer (Trend Radar & Evidence Engine)
-          </h1>
-          <p className="text-xs text-slate-400 mt-0.5">Identifikasi signal pasar, trending hashtag, audio rights, event revalidation, & evidence pack terverifikasi</p>
+      <div className="space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-3">
+          <div>
+            <h1 className="text-xl font-bold text-white flex items-center gap-2">
+              <Compass className="w-5 h-5 text-cyan-400" />
+              Intelligence Layer (Trend Radar & Evidence Engine)
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">Identifikasi signal pasar, trending hashtag, audio rights, event revalidation, & evidence pack terverifikasi</p>
+          </div>
         </div>
+        <RbacBanner moduleName="Intelligence Layer" requiredAction="canAddTrend" requiredRole="ROLE_STRATEGY_LEAD / ROLE_MARCOM_CREATOR / ROLE_FACT_CHECKER / ROLE_SYSTEM_ADMIN" />
       </div>
 
       {/* Tab 1: Trend Radar */}
@@ -313,9 +320,52 @@ export const IntelligenceView: React.FC<IntelligenceViewProps> = ({ activeTab, s
                 <h3 className="text-xs font-bold text-white">{opp.title}</h3>
                 <p className="text-xs text-slate-300 leading-relaxed"><strong className="text-slate-400">Business Angle:</strong> {opp.businessAngle}</p>
 
-                <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-400">Format: <strong className="text-slate-200">{opp.recommendedFormat}</strong></span>
-                  <span className="text-amber-300 font-medium">{opp.publishingWindow}</span>
+                <div className="pt-2 border-t border-slate-800 space-y-2 text-[11px]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Format: <strong className="text-slate-200">{opp.recommendedFormat}</strong></span>
+                    <span className="text-amber-300 font-medium">{opp.publishingWindow}</span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const newContentId = `cnt-${Date.now()}`;
+                      const newVersionId = `ver-${Date.now()}-1`;
+                      addContentWithVersion({
+                        id: newContentId,
+                        campaignId: selectedCampaign?.id || opp.campaignId || 'cmp-e2e',
+                        opportunityId: opp.id,
+                        title: opp.title,
+                        objective: `B2B Campaign Activation from Opportunity ${opp.title}`,
+                        audience: opp.audience,
+                        platform: 'LinkedIn',
+                        format: (opp.recommendedFormat as any) || 'Carousel',
+                        status: 'AI-Assisted Draft',
+                        pic: activeUser.name,
+                        currentVersionId: newVersionId
+                      }, {
+                        id: newVersionId,
+                        contentId: newContentId,
+                        versionNumber: 1,
+                        brief: opp.businessAngle,
+                        hook: `Hook: ${opp.title}`,
+                        caption: `Draft Konten hasil konversi Opportunity ${opp.title}. Angle: ${opp.businessAngle}`,
+                        script: `Script & Visual Flow untuk ${opp.title}`,
+                        cta: 'Hubungi Sales TELPRO / Kunjungi telpro.id',
+                        selectedKeywords: ['TELPRO', 'Business Growth'],
+                        selectedHashtags: ['#TELPRO2026'],
+                        createdBy: activeUser.name,
+                        createdAt: new Date().toISOString(),
+                        aiAssisted: true,
+                        evidenceIds: [],
+                        riskLevel: 'Low'
+                      });
+                      alert(`✅ Opportunity "${opp.title}" BERHASIL DISIMPAN KE PIPELINE KONTEN CAMPAIGN! Silakan cek di menu 04. CONTENT & PRODUCTION.`);
+                    }}
+                    className="w-full py-1.5 px-3 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-md transition-transform hover:scale-[1.02]"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    🚀 Konversi & Simpan ke Pipeline Konten
+                  </button>
                 </div>
               </div>
             ))}

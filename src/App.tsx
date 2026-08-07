@@ -47,7 +47,7 @@ function MainLayout() {
       id="app-root-container"
       className="h-screen w-screen flex flex-col bg-[#0A0A0A] text-slate-100 overflow-hidden font-sans"
     >
-      <Header />
+      <Header setActiveTab={setActiveTab} />
       <div className="flex-1 flex overflow-hidden">
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         <main

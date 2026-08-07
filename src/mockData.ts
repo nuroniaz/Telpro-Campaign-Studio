@@ -13,7 +13,9 @@ import {
   PerformanceMetric,
   LearningItem,
   IntegrationConnection,
-  UserProfile
+  UserProfile,
+  Storyboard,
+  VideoProject
 } from './types';
 
 export const INITIAL_USERS: UserProfile[] = [
@@ -72,6 +74,22 @@ export const INITIAL_USERS: UserProfile[] = [
     role: 'ROLE_PUBLISHER',
     title: 'Digital Publishing Specialist',
     businessUnit: 'TELPRO Media Center'
+  },
+  {
+    id: 'usr-8',
+    name: 'Komisaris / Board (Viewer)',
+    email: 'board.viewer@telpro.co.id',
+    role: 'ROLE_MANAGEMENT_VIEWER',
+    title: 'Executive Management Viewer',
+    businessUnit: 'TELPRO Oversight Board'
+  },
+  {
+    id: 'usr-9',
+    name: 'Admin Sistem',
+    email: 'sysadmin@telpro.co.id',
+    role: 'ROLE_SYSTEM_ADMIN',
+    title: 'Lead System Administrator',
+    businessUnit: 'TELPRO IT Infrastructure'
   }
 ];
 
@@ -443,13 +461,13 @@ export const INITIAL_APPROVALS: Approval[] = [
     id: 'app-101-1',
     contentVersionId: 'ver-101-v2',
     contentId: 'cnt-101',
-    stage: 'Fact & Evidence Check',
-    reviewerName: 'Ahmad Analyst',
-    reviewerRole: 'ROLE_ANALYST_QA',
+    stage: '01. Creator Submission',
+    reviewerName: 'Nuroniah (Marcom Lead)',
+    reviewerRole: 'ROLE_MARCOM_CREATOR',
     decision: 'Pass',
-    comment: 'Klaim efisiensi 35% dan penghematan 22% telah dicocokkan dengan Laporan Studi EVD-1. Terverifikasi.',
-    submittedAt: '2026-08-06T14:40:00Z',
-    decidedAt: '2026-08-06T15:10:00Z',
+    comment: 'Draft brief, hook, script carousel Smart Warehouse disiapkan dan diajukan ke pipeline.',
+    submittedAt: '2026-08-06T14:00:00Z',
+    decidedAt: '2026-08-06T14:15:00Z',
     dueAt: '2026-08-07T12:00:00Z',
     slaStatus: 'Completed'
   },
@@ -457,13 +475,13 @@ export const INITIAL_APPROVALS: Approval[] = [
     id: 'app-101-2',
     contentVersionId: 'ver-101-v2',
     contentId: 'cnt-101',
-    stage: 'Brand & Creative QA',
+    stage: '02. Marcom Review',
     reviewerName: 'Ahmad Analyst',
     reviewerRole: 'ROLE_ANALYST_QA',
     decision: 'Pass',
-    comment: 'Penggunaan audio terlisensi resmi, logo TELPRO sesuai tata letak brand guideline 2026.',
-    submittedAt: '2026-08-06T15:15:00Z',
-    decidedAt: '2026-08-06T15:45:00Z',
+    comment: 'Klaim efisiensi 35% dan penghematan 22% telah dicocokkan dengan Laporan Studi EVD-1. Terverifikasi.',
+    submittedAt: '2026-08-06T14:20:00Z',
+    decidedAt: '2026-08-06T15:10:00Z',
     dueAt: '2026-08-07T12:00:00Z',
     slaStatus: 'Completed'
   },
@@ -471,13 +489,13 @@ export const INITIAL_APPROVALS: Approval[] = [
     id: 'app-101-3',
     contentVersionId: 'ver-101-v2',
     contentId: 'cnt-101',
-    stage: 'Manager Review',
+    stage: '03. Manager Marketing Review',
     reviewerName: 'Budi Manager',
     reviewerRole: 'ROLE_MANAGER_MARKETING',
     decision: 'Approve',
-    comment: 'Hook tajam, narasi mendukung KPI MQL Smart Logistics. Lanjutkan ke VP.',
-    submittedAt: '2026-08-06T15:50:00Z',
-    decidedAt: '2026-08-06T16:30:00Z',
+    comment: 'Hook tajam, narasi mendukung KPI MQL Smart Logistics. Lanjutkan ke VP Marketing.',
+    submittedAt: '2026-08-06T15:15:00Z',
+    decidedAt: '2026-08-06T16:00:00Z',
     dueAt: '2026-08-07T15:00:00Z',
     slaStatus: 'Completed'
   },
@@ -485,11 +503,11 @@ export const INITIAL_APPROVALS: Approval[] = [
     id: 'app-101-4',
     contentVersionId: 'ver-101-v2',
     contentId: 'cnt-101',
-    stage: 'VP Marketing Review',
+    stage: '04. VP Marketing Review',
     reviewerName: 'Siti VP Marketing',
     reviewerRole: 'ROLE_VP_MARKETING',
     decision: 'Pending',
-    submittedAt: '2026-08-06T16:35:00Z',
+    submittedAt: '2026-08-06T16:05:00Z',
     dueAt: '2026-08-07T18:00:00Z',
     slaStatus: 'Normal'
   }
@@ -658,3 +676,160 @@ export const INITIAL_LEARNINGS: LearningItem[] = [
     createdAt: '2026-08-04T16:00:00Z'
   }
 ];
+
+export const INITIAL_STORYBOARDS: Storyboard[] = [
+  {
+    id: 'stb-101',
+    contentId: 'cnt-101',
+    versionNumber: 1,
+    mode: 'Production Storyboard',
+    status: 'In Production',
+    createdAt: '2026-08-06T14:00:00Z',
+    scenes: [
+      {
+        id: 'sc-1',
+        sceneNumber: 1,
+        duration: 4,
+        sceneObjective: 'Hook Masalah Penumpukan Stok',
+        visualDescription: 'Wide shot area gudang logistik dengan tumpukan kardus kargo dan aktivitas forklift.',
+        shotType: 'Wide Shot',
+        cameraAngle: 'High Angle',
+        cameraMovement: 'Static',
+        lighting: 'Cool Industrial Overhead LED',
+        voiceOver: 'Apakah penumpukan barang dan keterlambatan kargo masih menghambat efisiensi gudang Anda?',
+        onScreenText: 'Delay Kargo = Margin Tergerus 🛑',
+        audioNote: 'Corporate Precision Motion Synth (Upbeat start)',
+        generatedImageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80',
+        representationStatus: 'ACTUAL ASSET WITH AI MOTION',
+        reviewStatus: 'Approved'
+      },
+      {
+        id: 'sc-2',
+        sceneNumber: 2,
+        duration: 5,
+        sceneObjective: 'Solusi IoT Sensor TELPRO',
+        visualDescription: 'Close-up sensor IoT TELPRO terpasang di rak gudang dengan indikator LED hijau aktif.',
+        shotType: 'Close Up',
+        cameraAngle: 'Eye Level',
+        cameraMovement: 'Dolly Push-in',
+        lighting: 'Accent Cyan Spotlight',
+        voiceOver: 'Dengan sensor IoT TELPRO, lokasi kargo dan suhu ruang terpantau otomatis secara akurat.',
+        onScreenText: 'Monitoring IoT 24/7 Real-Time 📡',
+        audioNote: 'Subtle Tech Ping Sound Effect',
+        generatedImageUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80',
+        representationStatus: 'AI-ASSISTED COMPOSITE',
+        reviewStatus: 'Approved'
+      },
+      {
+        id: 'sc-3',
+        sceneNumber: 3,
+        duration: 5,
+        sceneObjective: 'Bukti Hasil & Dashboard',
+        visualDescription: 'Staf manajer gudang memegang tablet yang menampilkan Telpro Smart Warehouse Dashboard.',
+        shotType: 'Medium Shot',
+        cameraAngle: 'Eye Level',
+        cameraMovement: 'Handheld',
+        lighting: 'Warm Soft Interior',
+        voiceOver: 'Akurasi inventori meningkat hingga 99.8% dan waktu pencarian kargo berkurang 60%.',
+        onScreenText: 'Akurasi Inventori 99.8% ✔️',
+        audioNote: 'Data Rise Sound Effect',
+        generatedImageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
+        representationStatus: 'ACTUAL VERIFIED ASSET',
+        reviewStatus: 'Approved'
+      },
+      {
+        id: 'sc-4',
+        sceneNumber: 4,
+        duration: 4,
+        sceneObjective: 'CTA Konsultasi B2B TELPRO',
+        visualDescription: 'Truk armada logistik dengan logo TELPRO berangkat dari bay gudang disertai animasi CTA contact.',
+        shotType: 'Medium Shot',
+        cameraAngle: 'Low Angle',
+        cameraMovement: 'Pan',
+        lighting: 'Natural Golden Hour',
+        voiceOver: 'Transformasi operasional gudang Anda bersama TELPRO. Konsultasi solusi B2B gratis hari ini.',
+        onScreenText: 'Hubungi TELPRO Enterprise Sales 🚀',
+        audioNote: 'Audio Synth Outro & Logo Stinger',
+        generatedImageUrl: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80',
+        representationStatus: 'ACTUAL VERIFIED ASSET',
+        reviewStatus: 'Approved'
+      }
+    ]
+  }
+];
+
+export const INITIAL_VIDEO_PROJECTS: VideoProject[] = [
+  {
+    id: 'vid-101',
+    contentId: 'cnt-101',
+    title: 'Smart Warehouse TELPRO Reel 18s',
+    aspectRatio: '9:16',
+    targetDuration: 18,
+    status: 'Ready for QA',
+    voiceOverAudioUrl: 'https://actions.google.com/sounds/v1/speech/person_speaking.ogg',
+    backgroundMusicUrl: 'https://actions.google.com/sounds/v1/science_fiction/digital_pulse.ogg',
+    scenes: [
+      {
+        id: 'vsc-1',
+        storyboardSceneId: 'sc-1',
+        sceneNumber: 1,
+        sourceMode: 'Hybrid Real Asset + AI',
+        duration: 4,
+        aspectRatio: '9:16',
+        prompt: 'Cinematic wide shot of a modern automated warehouse in Surabaya, smooth camera push-in, industrial lighting',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=400&q=80',
+        videoClipUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        provider: 'Veo AI Video Router',
+        consistencyLock: { brandLock: true, characterLock: false, buildingLock: true, visualStyleLock: true },
+        propertyTruthGuard: 'ACTUAL ASSET WITH AI MOTION',
+        reviewStatus: 'Approved'
+      },
+      {
+        id: 'vsc-2',
+        storyboardSceneId: 'sc-2',
+        sceneNumber: 2,
+        sourceMode: 'Image-to-Video',
+        duration: 5,
+        aspectRatio: '9:16',
+        prompt: 'Macro shot of green LED blinking on IoT RFID sensor attached to warehouse rack, high-tech motion',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=400&q=80',
+        videoClipUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+        provider: 'Gemini / Imagen 3',
+        consistencyLock: { brandLock: true, characterLock: false, buildingLock: false, visualStyleLock: true },
+        propertyTruthGuard: 'AI-ASSISTED COMPOSITE',
+        reviewStatus: 'Approved'
+      },
+      {
+        id: 'vsc-3',
+        storyboardSceneId: 'sc-3',
+        sceneNumber: 3,
+        sourceMode: 'Real Footage',
+        duration: 5,
+        aspectRatio: '9:16',
+        prompt: 'Real recorded footage of Telpro Smart Warehouse Dashboard on iPad Pro',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=400&q=80',
+        videoClipUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        provider: 'TELPRO Real Asset Repository',
+        consistencyLock: { brandLock: true, characterLock: true, buildingLock: true, visualStyleLock: true },
+        propertyTruthGuard: 'ACTUAL VERIFIED ASSET',
+        reviewStatus: 'Approved'
+      },
+      {
+        id: 'vsc-4',
+        storyboardSceneId: 'sc-4',
+        sceneNumber: 4,
+        sourceMode: 'Text-to-Video',
+        duration: 4,
+        aspectRatio: '9:16',
+        prompt: 'Logistics truck leaving warehouse bay with TELPRO 2026 motion graphic branding overlay',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=400&q=80',
+        videoClipUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+        provider: 'Veo AI Video Router',
+        consistencyLock: { brandLock: true, characterLock: false, buildingLock: true, visualStyleLock: true },
+        propertyTruthGuard: 'ACTUAL VERIFIED ASSET',
+        reviewStatus: 'Approved'
+      }
+    ]
+  }
+];
+

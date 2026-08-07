@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { NavTab } from '../Sidebar';
+import { RbacBanner } from '../Common/RbacBanner';
 import {
   Settings,
   Briefcase,
@@ -43,14 +44,17 @@ export const SystemView: React.FC<SystemViewProps> = ({ activeTab }) => {
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300 text-xs">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-3">
-        <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <Settings className="w-5 h-5 text-slate-400" />
-            System Administration, Integrations & Audit Trail
-          </h1>
-          <p className="text-xs text-slate-400 mt-0.5">Pengelolaan koneksi integrasi external API, profil perusahaan, & log audit immutable</p>
+      <div className="space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-3">
+          <div>
+            <h1 className="text-xl font-bold text-white flex items-center gap-2">
+              <Settings className="w-5 h-5 text-slate-400" />
+              System Administration, Integrations & Audit Trail
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">Pengelolaan koneksi integrasi external API, profil perusahaan, & log audit immutable</p>
+          </div>
         </div>
+        <RbacBanner moduleName="System Administration" requiredAction="canManageSystem" requiredRole="ROLE_SYSTEM_ADMIN" />
       </div>
 
       {/* Tab 1: Business Profile */}

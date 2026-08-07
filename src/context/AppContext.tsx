@@ -19,7 +19,12 @@ import {
   AIMessage,
   DecisionType,
   ApprovalStage,
-  ContentStatus
+  ContentStatus,
+  Storyboard,
+  StoryboardScene,
+  VideoProject,
+  VideoScene,
+  APPROVAL_HIERARCHY
 } from '../types';
 import {
   INITIAL_USERS,
@@ -36,7 +41,9 @@ import {
   INITIAL_LEAD_FEEDBACKS,
   INITIAL_PERFORMANCE_METRICS,
   INITIAL_LEARNINGS,
-  INITIAL_INTEGRATIONS
+  INITIAL_INTEGRATIONS,
+  INITIAL_STORYBOARDS,
+  INITIAL_VIDEO_PROJECTS
 } from '../mockData';
 
 interface AppContextType {
@@ -63,6 +70,11 @@ interface AppContextType {
   integrations: IntegrationConnection[];
   aiMessages: AIMessage[];
   isAILoading: boolean;
+  storyboards: Storyboard[];
+  videoProjects: VideoProject[];
+
+  clearAllDummyData: () => void;
+  restoreDemoData: () => void;
 
   // Actions
   addCampaign: (campaign: Campaign) => void;
@@ -80,6 +92,12 @@ interface AppContextType {
   sendAIMessage: (text: string) => Promise<void>;
   clearAIChat: () => void;
   publishContent: (contentId: string) => void;
+  updateStoryboardScene: (storyboardId: string, sceneId: string, updatedScene: Partial<StoryboardScene>) => void;
+  addStoryboardScene: (storyboardId: string, newScene: StoryboardScene) => void;
+  addStoryboard: (storyboard: Storyboard) => void;
+  updateVideoScene: (videoProjectId: string, videoSceneId: string, updatedScene: Partial<VideoScene>) => void;
+  regenerateSceneMedia: (videoProjectId: string, videoSceneId: string) => void;
+  addVideoProject: (project: VideoProject) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -144,6 +162,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [learnings] = useState<LearningItem[]>(INITIAL_LEARNINGS);
   const [integrations] = useState<IntegrationConnection[]>(INITIAL_INTEGRATIONS);
 
+  const [storyboards, setStoryboards] = useState<Storyboard[]>(() => {
+    const local = localStorage.getItem('telpro_storyboards');
+    return local ? JSON.parse(local) : INITIAL_STORYBOARDS;
+  });
+
+  const [videoProjects, setVideoProjects] = useState<VideoProject[]>(() => {
+    const local = localStorage.getItem('telpro_video_projects');
+    return local ? JSON.parse(local) : INITIAL_VIDEO_PROJECTS;
+  });
+
   const [aiMessages, setAiMessages] = useState<AIMessage[]>([
     {
       id: 'msg-init',
@@ -159,6 +187,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   ]);
   const [isAILoading, setIsAILoading] = useState<boolean>(false);
+
+  // Sync to localStorage
+  useEffect(() => {
+    localStorage.setItem('telpro_storyboards', JSON.stringify(storyboards));
+  }, [storyboards]);
+
+  useEffect(() => {
+    localStorage.setItem('telpro_video_projects', JSON.stringify(videoProjects));
+  }, [videoProjects]);
 
   // Sync to localStorage
   useEffect(() => {
@@ -317,12 +354,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setContents(prev => [content, ...prev]);
     setContentVersions(prev => [version, ...prev]);
 
-    // Create initial approval stage (Fact Check & Evidence Check)
+    // Initial approval sent to Step 2: Marcom Review (ROLE_ANALYST_QA) after Creator Submission
     const initialApproval: Approval = {
       id: `app-${Date.now()}`,
       contentVersionId: version.id,
       contentId: content.id,
-      stage: 'Fact & Evidence Check',
+      stage: '02. Marcom Review',
       reviewerName: 'Ahmad Analyst',
       reviewerRole: 'ROLE_ANALYST_QA',
       decision: 'Pending',
@@ -377,12 +414,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setContentVersions(prev => [...prev, newVersion]);
     setContents(prev => prev.map(c => c.id === contentId ? { ...c, currentVersionId: newVersionId, status: 'Needs Verification' } : c));
 
-    // Reset approval queue for this new version
+    // Reset approval queue for this new version (Sent to Step 2: Marcom Review)
     const newApproval: Approval = {
       id: `app-${Date.now()}`,
       contentVersionId: newVersionId,
       contentId: contentId,
-      stage: 'Fact & Evidence Check',
+      stage: '02. Marcom Review',
       reviewerName: 'Ahmad Analyst',
       reviewerRole: 'ROLE_ANALYST_QA',
       decision: 'Pending',
@@ -419,44 +456,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       slaStatus: 'Completed'
     } : a));
 
-    // Progress workflow if approved/passed
+    // Progress workflow if approved/passed sequentially through the 7-tier hierarchy
     const content = contents.find(c => c.id === appItem.contentId);
     if (content) {
       if (decision === 'Pass' || decision === 'Approve') {
-        let nextStage: ApprovalStage | null = null;
-        let nextStatus: ContentStatus = 'Under Review';
+        // Find current step in APPROVAL_HIERARCHY
+        let currentStepIdx = APPROVAL_HIERARCHY.findIndex(
+          h => h.stage === appItem.stage || h.role === appItem.reviewerRole
+        );
 
-        if (appItem.stage === 'Fact & Evidence Check') {
-          nextStage = 'Brand & Creative QA';
-        } else if (appItem.stage === 'Brand & Creative QA') {
-          nextStage = 'Manager Review';
-        } else if (appItem.stage === 'Manager Review') {
-          nextStage = 'VP Marketing Review';
-        } else if (appItem.stage === 'VP Marketing Review') {
-          nextStage = 'VP Corsec Review';
-        } else if (appItem.stage === 'VP Corsec Review') {
-          nextStage = 'Final Approval';
-        } else if (appItem.stage === 'Final Approval') {
-          nextStatus = 'Approved';
+        // Fallback matching for legacy stage names
+        if (currentStepIdx === -1) {
+          if (appItem.stage === 'Fact & Evidence Check') currentStepIdx = 1; // Marcom Review
+          else if (appItem.stage === 'Brand & Creative QA' || appItem.stage === 'Manager Review') currentStepIdx = 2; // Manager Marketing Review
+          else if (appItem.stage === 'VP Marketing Review') currentStepIdx = 3;
+          else if (appItem.stage === 'VP Corsec Review') currentStepIdx = 4;
+          else if (appItem.stage === 'Final Approval') currentStepIdx = 5; // Direktur Utama Approval
         }
 
-        if (nextStage) {
+        const nextHierarchyStep = APPROVAL_HIERARCHY[currentStepIdx + 1];
+
+        if (nextHierarchyStep) {
           const nextApproval: Approval = {
-            id: `app-${Date.now()}-${Math.floor(Math.random() * 100)}`,
+            id: `app-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
             contentVersionId: appItem.contentVersionId,
             contentId: appItem.contentId,
-            stage: nextStage,
-            reviewerName: 'Pending Officer',
-            reviewerRole: nextStage === 'Manager Review' ? 'ROLE_MANAGER_MARKETING' :
-                          nextStage === 'VP Marketing Review' ? 'ROLE_VP_MARKETING' :
-                          nextStage === 'VP Corsec Review' ? 'ROLE_VP_CORSEC' : 'ROLE_FINAL_APPROVER',
+            stage: nextHierarchyStep.stage,
+            reviewerName: `Pending (${nextHierarchyStep.label})`,
+            reviewerRole: nextHierarchyStep.role,
             decision: 'Pending',
             submittedAt: new Date().toISOString(),
             dueAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
             slaStatus: 'Normal'
           };
           setApprovals(prev => [nextApproval, ...prev]);
+          setContents(prev => prev.map(c => c.id === content.id ? { ...c, status: 'Under Review' } : c));
         } else {
+          // Final stage (Publisher Execution) approved -> mark as Approved / Ready
           setContents(prev => prev.map(c => c.id === content.id ? { ...c, status: 'Approved' } : c));
         }
       } else if (decision === 'Revision Required') {
@@ -587,6 +623,189 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ]);
   };
 
+  const updateStoryboardScene = (storyboardId: string, sceneId: string, updatedScene: Partial<StoryboardScene>) => {
+    setStoryboards(prev =>
+      prev.map(stb => {
+        if (stb.id !== storyboardId) return stb;
+        return {
+          ...stb,
+          scenes: stb.scenes.map(sc => (sc.id === sceneId ? { ...sc, ...updatedScene } : sc))
+        };
+      })
+    );
+    addAuditLog({
+      actorName: activeUser.name,
+      actorRole: activeUser.role,
+      action: 'UPDATE_STORYBOARD_SCENE',
+      entityName: 'StoryboardScene',
+      entityId: sceneId,
+      sourceSystem: 'Visual Storyboard Generator'
+    });
+  };
+
+  const addStoryboardScene = (storyboardId: string, newScene: StoryboardScene) => {
+    setStoryboards(prev =>
+      prev.map(stb => {
+        if (stb.id !== storyboardId) return stb;
+        return { ...stb, scenes: [...stb.scenes, newScene] };
+      })
+    );
+    addAuditLog({
+      actorName: activeUser.name,
+      actorRole: activeUser.role,
+      action: 'ADD_STORYBOARD_SCENE',
+      entityName: 'StoryboardScene',
+      entityId: newScene.id,
+      sourceSystem: 'Visual Storyboard Generator'
+    });
+  };
+
+  const addStoryboard = (storyboard: Storyboard) => {
+    setStoryboards(prev => [storyboard, ...prev]);
+    addAuditLog({
+      actorName: activeUser.name,
+      actorRole: activeUser.role,
+      action: 'ADD_STORYBOARD',
+      entityName: 'Storyboard',
+      entityId: storyboard.id,
+      sourceSystem: 'Visual Storyboard Generator'
+    });
+  };
+
+  const addVideoProject = (project: VideoProject) => {
+    setVideoProjects(prev => [project, ...prev]);
+    addAuditLog({
+      actorName: activeUser.name,
+      actorRole: activeUser.role,
+      action: 'ADD_VIDEO_PROJECT',
+      entityName: 'VideoProject',
+      entityId: project.id,
+      sourceSystem: 'AI Video Studio'
+    });
+  };
+
+  const updateVideoScene = (videoProjectId: string, videoSceneId: string, updatedScene: Partial<VideoScene>) => {
+    setVideoProjects(prev =>
+      prev.map(proj => {
+        if (proj.id !== videoProjectId) return proj;
+        return {
+          ...proj,
+          scenes: proj.scenes.map(sc => (sc.id === videoSceneId ? { ...sc, ...updatedScene } : sc))
+        };
+      })
+    );
+    addAuditLog({
+      actorName: activeUser.name,
+      actorRole: activeUser.role,
+      action: 'UPDATE_VIDEO_SCENE',
+      entityName: 'VideoScene',
+      entityId: videoSceneId,
+      sourceSystem: 'AI Video Studio'
+    });
+  };
+
+  const regenerateSceneMedia = (videoProjectId: string, videoSceneId: string) => {
+    const timestamp = Date.now();
+    setVideoProjects(prev =>
+      prev.map(proj => {
+        if (proj.id !== videoProjectId) return proj;
+        return {
+          ...proj,
+          scenes: proj.scenes.map(sc => {
+            if (sc.id !== videoSceneId) return sc;
+            return {
+              ...sc,
+              thumbnailUrl: `https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=400&q=80&sig=${timestamp}`,
+              reviewStatus: 'Pending'
+            };
+          })
+        };
+      })
+    );
+    addAuditLog({
+      actorName: activeUser.name,
+      actorRole: activeUser.role,
+      action: 'REGENERATE_VIDEO_SCENE',
+      entityName: 'VideoScene',
+      entityId: videoSceneId,
+      sourceSystem: 'AI Video Router'
+    });
+  };
+
+  const clearAllDummyData = () => {
+    setCampaigns([]);
+    setTrends([]);
+    setEvents([]);
+    setEvidences([]);
+    setOpportunities([]);
+    setContents([]);
+    setContentVersions([]);
+    setApprovals([]);
+    setBudgets([]);
+    setStoryboards([]);
+    setVideoProjects([]);
+    setSelectedCampaignId('');
+
+    localStorage.removeItem('telpro_campaigns');
+    localStorage.removeItem('telpro_trends');
+    localStorage.removeItem('telpro_events');
+    localStorage.removeItem('telpro_evidences');
+    localStorage.removeItem('telpro_opportunities');
+    localStorage.removeItem('telpro_contents');
+    localStorage.removeItem('telpro_content_versions');
+    localStorage.removeItem('telpro_approvals');
+    localStorage.removeItem('telpro_budgets');
+    localStorage.removeItem('telpro_storyboards');
+    localStorage.removeItem('telpro_video_projects');
+
+    addAuditLog({
+      actorName: activeUser.name,
+      actorRole: activeUser.role,
+      action: 'CLEAR_ALL_DUMMY_DATA',
+      entityName: 'SystemData',
+      entityId: 'ALL',
+      afterState: 'Dikosongkan semua data dummy untuk pengujian end-to-end',
+      sourceSystem: 'TELPRO System Data Manager'
+    });
+  };
+
+  const restoreDemoData = () => {
+    setCampaigns(INITIAL_CAMPAIGNS);
+    setTrends(INITIAL_TRENDS);
+    setEvents(INITIAL_EVENTS);
+    setEvidences(INITIAL_EVIDENCES);
+    setOpportunities(INITIAL_OPPORTUNITIES);
+    setContents(INITIAL_CONTENTS);
+    setContentVersions(INITIAL_CONTENT_VERSIONS);
+    setApprovals(INITIAL_APPROVALS);
+    setBudgets(INITIAL_BUDGETS);
+    setStoryboards(INITIAL_STORYBOARDS);
+    setVideoProjects(INITIAL_VIDEO_PROJECTS);
+    setSelectedCampaignId(INITIAL_CAMPAIGNS[0].id);
+
+    localStorage.setItem('telpro_campaigns', JSON.stringify(INITIAL_CAMPAIGNS));
+    localStorage.setItem('telpro_trends', JSON.stringify(INITIAL_TRENDS));
+    localStorage.setItem('telpro_events', JSON.stringify(INITIAL_EVENTS));
+    localStorage.setItem('telpro_evidences', JSON.stringify(INITIAL_EVIDENCES));
+    localStorage.setItem('telpro_opportunities', JSON.stringify(INITIAL_OPPORTUNITIES));
+    localStorage.setItem('telpro_contents', JSON.stringify(INITIAL_CONTENTS));
+    localStorage.setItem('telpro_content_versions', JSON.stringify(INITIAL_CONTENT_VERSIONS));
+    localStorage.setItem('telpro_approvals', JSON.stringify(INITIAL_APPROVALS));
+    localStorage.setItem('telpro_budgets', JSON.stringify(INITIAL_BUDGETS));
+    localStorage.setItem('telpro_storyboards', JSON.stringify(INITIAL_STORYBOARDS));
+    localStorage.setItem('telpro_video_projects', JSON.stringify(INITIAL_VIDEO_PROJECTS));
+
+    addAuditLog({
+      actorName: activeUser.name,
+      actorRole: activeUser.role,
+      action: 'RESTORE_DEMO_DATA',
+      entityName: 'SystemData',
+      entityId: 'ALL',
+      afterState: 'Dipulihkan data demo awal',
+      sourceSystem: 'TELPRO System Data Manager'
+    });
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -612,6 +831,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         integrations,
         aiMessages,
         isAILoading,
+        storyboards,
+        videoProjects,
+        clearAllDummyData,
+        restoreDemoData,
         addCampaign,
         updateCampaignStatus,
         addTrend,
@@ -626,7 +849,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addAuditLog,
         sendAIMessage,
         clearAIChat,
-        publishContent
+        publishContent,
+        updateStoryboardScene,
+        addStoryboardScene,
+        addStoryboard,
+        updateVideoScene,
+        regenerateSceneMedia,
+        addVideoProject
       }}
     >
       {children}

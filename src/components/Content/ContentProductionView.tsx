@@ -2,6 +2,11 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ContentItem, ContentVersion } from '../../types';
 import { NavTab } from '../Sidebar';
+import { RbacBanner } from '../Common/RbacBanner';
+import { hasPermission } from '../../utils/rbac';
+import { VisualStoryboardGenerator } from './VisualStoryboardGenerator';
+import { AiVideoStudio } from './AiVideoStudio';
+import { VideoTimelineComposer } from './VideoTimelineComposer';
 import {
   Sparkles,
   BrainCircuit,
@@ -21,7 +26,15 @@ import {
   AlertTriangle,
   FileText,
   SlidersHorizontal,
-  Bot
+  Bot,
+  Lock,
+  Film,
+  Video,
+  Upload,
+  FileUp,
+  Image,
+  File,
+  Trash2
 } from 'lucide-react';
 
 interface ContentProductionViewProps {
@@ -29,7 +42,7 @@ interface ContentProductionViewProps {
   setActiveTab?: (tab: NavTab) => void;
 }
 
-export const ContentProductionView: React.FC<ContentProductionViewProps> = ({ activeTab }) => {
+export const ContentProductionView: React.FC<ContentProductionViewProps> = ({ activeTab, setActiveTab }) => {
   const {
     selectedCampaign,
     contents,
@@ -44,8 +57,11 @@ export const ContentProductionView: React.FC<ContentProductionViewProps> = ({ ac
     activeUser
   } = useApp();
 
-  let contentTab: 'aipartner' | 'studio' | 'discoverability' | 'creativetrend' | 'production' | 'assets' = 'aipartner';
+  let contentTab: 'aipartner' | 'studio' | 'storyboard' | 'aivideo' | 'timeline' | 'discoverability' | 'creativetrend' | 'production' | 'assets' = 'aipartner';
   if (activeTab === 'content-studio') contentTab = 'studio';
+  else if (activeTab === 'content-storyboard') contentTab = 'storyboard';
+  else if (activeTab === 'content-aivideo') contentTab = 'aivideo';
+  else if (activeTab === 'content-timeline') contentTab = 'timeline';
   else if (activeTab === 'content-discoverability') contentTab = 'discoverability';
   else if (activeTab === 'content-creativetrend') contentTab = 'creativetrend';
   else if (activeTab === 'content-production') contentTab = 'production';
@@ -54,6 +70,16 @@ export const ContentProductionView: React.FC<ContentProductionViewProps> = ({ ac
 
   // AI Chat input
   const [chatInput, setChatInput] = useState('');
+
+  // Save to Pipeline Modal States
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveTitle, setSaveTitle] = useState('');
+  const [savePlatform, setSavePlatform] = useState('LinkedIn');
+  const [saveFormat, setSaveFormat] = useState<'Carousel' | 'Reels/Shorts' | 'Infographic' | 'Article' | 'Video Storyboard'>('Carousel');
+  const [saveHook, setSaveHook] = useState('');
+  const [saveCaption, setSaveCaption] = useState('');
+  const [saveScript, setSaveScript] = useState('');
+  const [saveCta, setSaveCta] = useState('Hubungi TELPRO Sales / Kunjungi telpro.id');
 
   // Creative Studio selected content
   const [selectedContentId, setSelectedContentId] = useState<string>(contents[0]?.id || '');
@@ -65,6 +91,88 @@ export const ContentProductionView: React.FC<ContentProductionViewProps> = ({ ac
   const [editCaption, setEditCaption] = useState(activeVersion?.caption || '');
   const [editScript, setEditScript] = useState(activeVersion?.script || '');
   const [editCta, setEditCta] = useState(activeVersion?.cta || '');
+
+  // Asset Library Upload States
+  const [assetList, setAssetList] = useState<Array<{ id: string; name: string; size: string; type: string; rights: string; date: string; url?: string }>>([
+    { id: 'ast-1', name: 'TELPRO Brand Logo Pack 2026.zip', size: '14.2 MB', type: 'Brand Asset', rights: 'TELPRO Verified', date: '2026-08-01' },
+    { id: 'ast-2', name: 'Dashboard Smart Warehouse UI Render.png', size: '2.8 MB', type: 'Product Asset', rights: 'TELPRO Verified', date: '2026-08-03' },
+    { id: 'ast-3', name: 'Audio Synth Commercial License.wav', size: '8.5 MB', type: 'Licensed Audio', rights: 'TELPRO Verified', date: '2026-08-05' }
+  ]);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newAssets = Array.from(files).map((file: File, i) => ({
+      id: `ast-${Date.now()}-${i}`,
+      name: file.name,
+      size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+      type: file.type.includes('image') ? 'Visual Image' : file.type.includes('video') ? 'Video Asset' : 'Document/Asset',
+      rights: 'TELPRO Verified Upload',
+      date: new Date().toISOString().split('T')[0],
+      url: URL.createObjectURL(file)
+    }));
+
+    setAssetList(prev => [...newAssets, ...prev]);
+    alert(`✅ Berhasil mengunggah ${files.length} berkas media/asset baru ke Drive Sync TELPRO!`);
+  };
+
+  const openSavePipelineModalWithText = (text: string) => {
+    const campaignName = selectedCampaign?.name || 'Campaign Aktif';
+    setSaveTitle(`Konten AI: ${campaignName} - ${new Date().toLocaleDateString('id-ID')}`);
+    setSaveHook(text.slice(0, 150) + '...');
+    setSaveCaption(text);
+    setSaveScript(text);
+    setSaveCta('Hubungi TELPRO Sales / Kunjungi telpro.id');
+    setShowSaveModal(true);
+  };
+
+  const handleSaveToPipelineSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!saveTitle.trim()) {
+      alert('Mohon isi judul konten terlebih dahulu.');
+      return;
+    }
+
+    const newContentId = `cnt-${Date.now()}`;
+    const newVersionId = `ver-${Date.now()}-1`;
+
+    const newContent: ContentItem = {
+      id: newContentId,
+      campaignId: selectedCampaign?.id || 'cmp-e2e',
+      title: saveTitle,
+      objective: selectedCampaign?.businessObjective || 'Peningkatan Awarness & B2B Leads',
+      audience: selectedCampaign?.audience || 'Target Executive B2B',
+      platform: savePlatform,
+      format: saveFormat,
+      status: 'AI-Assisted Draft',
+      pic: activeUser.name,
+      currentVersionId: newVersionId
+    };
+
+    const newVersion: ContentVersion = {
+      id: newVersionId,
+      contentId: newContentId,
+      versionNumber: 1,
+      brief: `Brief Konten AI untuk ${saveTitle}`,
+      hook: saveHook || 'Standard TELPRO Hook',
+      caption: saveCaption || 'Standard TELPRO Caption',
+      script: saveScript || 'Standard TELPRO Script',
+      cta: saveCta || 'Hubungi TELPRO Sales / Kunjungi telpro.id',
+      selectedKeywords: ['TELPRO', 'Smart Solution'],
+      selectedHashtags: ['#TELPRO2026', '#B2BSolution'],
+      createdBy: activeUser.name,
+      createdAt: new Date().toISOString(),
+      aiAssisted: true,
+      evidenceIds: [],
+      riskLevel: 'Low'
+    };
+
+    addContentWithVersion(newContent, newVersion);
+    setSelectedContentId(newContentId);
+    setShowSaveModal(false);
+    alert(`✅ BERHASIL DISIMPAN KE PIPELINE KONTEN CAMPAIGN!\n\nKonten "${saveTitle}" untuk Campaign "${selectedCampaign?.name || 'Aktif'}" telah terdaftar di Pipeline Konten dan otomatis masuk ke Tahap 1 Fact Check & Evidence Review.`);
+  };
 
   // Handle Apply AI Action directly from chat message
   const handleApplyAIAction = (actionType: string) => {
@@ -92,14 +200,17 @@ export const ContentProductionView: React.FC<ContentProductionViewProps> = ({ ac
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-3">
-        <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-rose-500" />
-            Content & Production (Agentic AI Collaboration)
-          </h1>
-          <p className="text-xs text-slate-400 mt-0.5">TELPRO AI Content Partner, Creative Studio, Discoverability, Creative Trend, & Asset Library</p>
+      <div className="space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-3">
+          <div>
+            <h1 className="text-xl font-bold text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-rose-500" />
+              Content & Production (Agentic AI Collaboration)
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">TELPRO AI Content Partner, Creative Studio, Discoverability, Creative Trend, & Asset Library</p>
+          </div>
         </div>
+        <RbacBanner moduleName="Content & Production" requiredAction="canCreateContent" requiredRole="ROLE_MARCOM_CREATOR / ROLE_STRATEGY_LEAD / ROLE_SYSTEM_ADMIN" />
       </div>
 
       {/* Tab 1: TELPRO AI Content Partner (Multi-turn Chat & Context Panel) */}
@@ -169,21 +280,27 @@ export const ContentProductionView: React.FC<ContentProductionViewProps> = ({ ac
                           </div>
                         )}
 
-                        {/* Suggested Actions (Explicit Apply Buttons) */}
-                        {msg.suggestedActions && msg.suggestedActions.length > 0 && (
-                          <div className="pt-2 flex flex-wrap gap-1.5">
-                            {msg.suggestedActions.map((act, i) => (
-                              <button
-                                key={i}
-                                onClick={() => handleApplyAIAction(act.type)}
-                                className="px-2.5 py-1 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-200 border border-rose-800/60 font-semibold text-[10px] transition-colors flex items-center gap-1 shadow-sm"
-                              >
-                                <Sparkles className="w-2.5 h-2.5 text-rose-400" />
-                                {act.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                        {/* Save to Pipeline Button for AI Messages */}
+                        <div className="pt-1 flex flex-wrap items-center gap-2">
+                          <button
+                            onClick={() => openSavePipelineModalWithText(msg.text)}
+                            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-[10px] shadow-md flex items-center gap-1.5 transition-transform hover:scale-105"
+                          >
+                            <Plus className="w-3 h-3" />
+                            Simpan ke Pipeline Konten Campaign
+                          </button>
+
+                          {msg.suggestedActions && msg.suggestedActions.length > 0 && msg.suggestedActions.map((act, i) => (
+                            <button
+                              key={i}
+                              onClick={() => handleApplyAIAction(act.type)}
+                              className="px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-rose-300 border border-rose-800/60 font-semibold text-[10px] transition-colors flex items-center gap-1 shadow-sm"
+                            >
+                              <Sparkles className="w-2.5 h-2.5 text-rose-400" />
+                              {act.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -240,11 +357,22 @@ export const ContentProductionView: React.FC<ContentProductionViewProps> = ({ ac
                 <span className="text-slate-300">{selectedCampaign?.audience}</span>
               </div>
 
-              <div className="pt-2 border-t border-slate-800">
+              <div className="pt-2 border-t border-slate-800 space-y-2">
                 <span className="text-slate-500 font-semibold block mb-1">Evidence Pack Terkait:</span>
                 <div className="p-2 rounded-xl bg-slate-950 text-[10px] text-slate-300 border border-slate-800">
-                  {evidences[0]?.sourceTitle} (Confidence {evidences[0]?.confidenceScore}%)
+                  {evidences[0]?.sourceTitle ? `${evidences[0].sourceTitle} (Confidence ${evidences[0].confidenceScore}%)` : 'TELPRO Internal Knowledge Base Verified'}
                 </div>
+
+                <button
+                  onClick={() => {
+                    const lastAiMsg = [...aiMessages].reverse().find(m => m.sender === 'ai');
+                    openSavePipelineModalWithText(lastAiMsg ? lastAiMsg.text : 'Draft Konten dari TELPRO AI Partner');
+                  }}
+                  className="w-full mt-2 py-2.5 px-3 rounded-2xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-xs shadow-lg shadow-rose-900/30 flex items-center justify-center gap-1.5 transition-transform hover:scale-[1.02]"
+                >
+                  <Plus className="w-4 h-4" />
+                  Simpan Hasil AI ke Pipeline
+                </button>
               </div>
             </div>
 
@@ -279,7 +407,22 @@ export const ContentProductionView: React.FC<ContentProductionViewProps> = ({ ac
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in">
           {/* Left Column (1 Col): Content Package Selector */}
           <div className="p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-3">
-            <h2 className="text-sm font-bold text-white">Pilih Paket Konten</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-white">Pilih Paket Konten</h2>
+              <button
+                onClick={() => {
+                  setSaveTitle(`Konten Baru: ${selectedCampaign?.name || 'Campaign'}`);
+                  setSaveHook('');
+                  setSaveCaption('');
+                  setSaveScript('');
+                  setSaveCta('Hubungi TELPRO Sales / Kunjungi telpro.id');
+                  setShowSaveModal(true);
+                }}
+                className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] flex items-center gap-1 shadow-sm transition-transform hover:scale-105"
+              >
+                <Plus className="w-3 h-3" /> + Buat Baru
+              </button>
+            </div>
             <div className="space-y-2 text-xs">
               {contents.map(cnt => (
                 <button
@@ -365,10 +508,49 @@ export const ContentProductionView: React.FC<ContentProductionViewProps> = ({ ac
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-medium focus:outline-none focus:ring-2 focus:ring-rose-500"
                 />
               </div>
+
+              {/* Upload Media Attachment Box inside Creative Studio */}
+              <div className="pt-2 border-t border-slate-800/80">
+                <label className="text-slate-300 font-semibold block mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Upload className="w-3.5 h-3.5 text-rose-400" />
+                    Upload Hasil Konten / Media Attachments (Desain, Video MP4, Carousel Slide)
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-normal">Sync to Drive</span>
+                </label>
+
+                <div className="relative border border-dashed border-rose-800/80 hover:border-rose-500 bg-slate-950/80 hover:bg-slate-950 rounded-2xl p-4 text-center transition-all group">
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    title="Klik atau drag file ke sini untuk mengunggah hasil eksekusi konten"
+                  />
+                  <div className="flex items-center justify-center gap-3 pointer-events-none">
+                    <div className="w-9 h-9 rounded-xl bg-rose-600/20 text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0">
+                      <FileUp className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-bold text-white">Klik atau seret berkas media ke sini</p>
+                      <p className="text-[10px] text-slate-400">Mendukung Gambar (PNG/JPG), Video (MP4), PSD, PDF (Maks. 500MB)</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Tab: Visual Storyboard Generator */}
+      {contentTab === 'storyboard' && <VisualStoryboardGenerator />}
+
+      {/* Tab: AI Video Studio */}
+      {contentTab === 'aivideo' && <AiVideoStudio />}
+
+      {/* Tab: Video Timeline & Composer */}
+      {contentTab === 'timeline' && <VideoTimelineComposer />}
 
       {/* Tab 3: Discoverability Optimizer */}
       {contentTab === 'discoverability' && (
@@ -443,30 +625,253 @@ export const ContentProductionView: React.FC<ContentProductionViewProps> = ({ ac
         </div>
       )}
 
-      {/* Tab 6: Asset Library */}
+      {/* Tab 6: Asset Library & Upload Hub */}
       {contentTab === 'assets' && (
-        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 shadow-xl animate-in fade-in text-xs">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-6 shadow-xl animate-in fade-in text-xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-4 gap-2">
             <div>
-              <h2 className="text-sm font-bold text-white">Asset Library & Google Drive Repository</h2>
-              <p className="text-xs text-slate-400">Sinkronisasi langsung dengan folder resmi Google Drive TELPRO</p>
+              <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                <Database className="w-4 h-4 text-rose-400" />
+                Asset Library & Media Repository Drive Sync
+              </h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Unggah hasil eksekusi konten (desain flyer, carousel slide, video MP4, logo, B-roll) untuk campaign <strong className="text-rose-400">{selectedCampaign?.name || 'Aktif'}</strong>.
+              </p>
             </div>
-            <span className="px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 font-semibold">
-              Drive Synced Live
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 font-semibold text-[11px] flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Google Drive Synced Live
+              </span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {[
-              { name: 'TELPRO Brand Logo Pack 2026.zip', type: 'Brand Asset', rights: 'Verified' },
-              { name: 'Dashboard Smart Warehouse UI Render.png', type: 'Product Asset', rights: 'Verified' },
-              { name: 'Audio Synth Commercial License.wav', type: 'Licensed Audio', rights: 'Verified' }
-            ].map(a => (
-              <div key={a.name} className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                <div className="font-bold text-white truncate">{a.name}</div>
-                <div className="text-[10px] text-slate-400">{a.type} • {a.rights}</div>
+          {/* Upload Drop Zone Box */}
+          <div className="relative border-2 border-dashed border-rose-800/80 hover:border-rose-500 bg-slate-950/80 hover:bg-slate-950 rounded-3xl p-8 text-center transition-all group">
+            <input
+              type="file"
+              multiple
+              onChange={handleFileUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              title="Klik atau seret file ke sini untuk mengunggah"
+            />
+            <div className="space-y-3 pointer-events-none">
+              <div className="w-12 h-12 rounded-2xl bg-rose-600/20 text-rose-400 border border-rose-500/40 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                <Upload className="w-6 h-6" />
               </div>
-            ))}
+              <div>
+                <p className="text-sm font-bold text-white">Unggah Hasil Konten / Media Kreatif</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Klik untuk memilih file atau <strong className="text-rose-400">drag & drop</strong> file di sini.
+                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  Mendukung PNG, JPG, MP4, WAV, ZIP, PDF, PSD (Maksimal 500MB/file)
+                </p>
+              </div>
+              <button className="px-4 py-2 rounded-xl bg-rose-600 group-hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-900/40 inline-flex items-center gap-1.5 transition-colors">
+                <FileUp className="w-3.5 h-3.5" /> Pilih File Asset
+              </button>
+            </div>
+          </div>
+
+          {/* List of Uploaded Assets */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-slate-300 font-bold border-b border-slate-800 pb-2">
+              <span>Daftar Asset & Media Repository ({assetList.length})</span>
+              <span className="text-[11px] text-slate-500">Kueri Status: Hak Cipta Verified TELPRO</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {assetList.map(a => (
+                <div key={a.id} className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 hover:border-slate-700 transition-colors shadow-inner">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-rose-400 shrink-0">
+                        {a.type.includes('Visual') || a.name.endsWith('.png') || a.name.endsWith('.jpg') ? (
+                          <Image className="w-4 h-4" />
+                        ) : a.type.includes('Video') || a.name.endsWith('.mp4') ? (
+                          <Film className="w-4 h-4 text-purple-400" />
+                        ) : (
+                          <File className="w-4 h-4 text-cyan-400" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-white text-xs truncate" title={a.name}>{a.name}</div>
+                        <div className="text-[10px] text-slate-400">{a.size} • {a.date}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {a.url && (
+                    <div className="rounded-xl overflow-hidden max-h-24 bg-black border border-slate-800 flex items-center justify-center">
+                      <img src={a.url} alt={a.name} className="object-cover h-24 w-full" />
+                    </div>
+                  )}
+
+                  <div className="pt-2 border-t border-slate-900 space-y-2">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800/80 font-semibold">
+                        {a.rights}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setAssetList(prev => prev.filter(x => x.id !== a.id));
+                        }}
+                        className="text-slate-500 hover:text-rose-400 transition-colors p-1"
+                        title="Hapus Asset"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5 pt-1">
+                      <button
+                        onClick={() => {
+                          if (setActiveTab) {
+                            setActiveTab('content-studio');
+                          }
+                          alert(`📌 Asset "${a.name}" berhasil ditautkan ke Creative Studio!\n\nAnda diarahkan ke Creative Studio untuk melengkapi Hook & Caption.`);
+                        }}
+                        className="px-2 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-rose-300 border border-rose-900/60 font-semibold text-[10px] flex items-center justify-center gap-1 transition-colors"
+                      >
+                        📌 Ke Creative Studio
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (setActiveTab) {
+                            setActiveTab('gov-approvals');
+                          }
+                          alert(`🚀 Asset "${a.name}" dan Paket Konten "${selectedCampaign?.name || 'Campaign'}" BERHASIL DIAJUKAN KE REVIEW QUEUE!\n\nAnda diarahkan ke menu 05. REVIEW & PUBLISH (My Review Queue & Approval) untuk peninjauan Fact-Check & Brand Governance.`);
+                        }}
+                        className="px-2 py-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-[10px] flex items-center justify-center gap-1 shadow transition-transform hover:scale-105"
+                      >
+                        🚀 Ajukan ke Review
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Simpan ke Pipeline Konten Campaign */}
+      {showSaveModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-rose-600/20 text-rose-400 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Simpan ke Pipeline Konten Campaign</h3>
+                  <p className="text-[11px] text-slate-400">
+                    Campaign Target: <strong className="text-rose-400">{selectedCampaign?.name || 'Campaign Aktif'}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="text-slate-400 hover:text-white text-xs p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveToPipelineSubmit} className="space-y-3 text-xs">
+              <div>
+                <label className="text-slate-300 font-semibold block mb-1">Judul Konten *</label>
+                <input
+                  type="text"
+                  required
+                  value={saveTitle}
+                  onChange={e => setSaveTitle(e.target.value)}
+                  placeholder="Misal: Edu-Carousel: Smart Space Smart Growth TELPRO"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-medium focus:outline-none focus:ring-2 focus:ring-rose-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-slate-300 font-semibold block mb-1">Platform Media *</label>
+                  <select
+                    value={savePlatform}
+                    onChange={e => setSavePlatform(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-medium focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  >
+                    <option value="LinkedIn">LinkedIn</option>
+                    <option value="Instagram">Instagram</option>
+                    <option value="TikTok">TikTok</option>
+                    <option value="Corporate Website">Corporate Website</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-slate-300 font-semibold block mb-1">Format Konten *</label>
+                  <select
+                    value={saveFormat}
+                    onChange={e => setSaveFormat(e.target.value as any)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-medium focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  >
+                    <option value="Carousel">Carousel</option>
+                    <option value="Reels/Shorts">Reels/Shorts</option>
+                    <option value="Infographic">Infographic</option>
+                    <option value="Article">Article</option>
+                    <option value="Video Storyboard">Video Storyboard</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-semibold block mb-1">Hook Kalimat Pembuka</label>
+                <input
+                  type="text"
+                  value={saveHook}
+                  onChange={e => setSaveHook(e.target.value)}
+                  placeholder="Kalimat penarik perhatian di 3 detik / slide pertama..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-semibold block mb-1">Caption / Teks Utama</label>
+                <textarea
+                  rows={4}
+                  value={saveCaption}
+                  onChange={e => setSaveCaption(e.target.value)}
+                  placeholder="Isi narasi, poin edukasi utama, atau deskripsi post..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-rose-500 font-mono text-[11px]"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-300 font-semibold block mb-1">CTA (Call to Action)</label>
+                <input
+                  type="text"
+                  value={saveCta}
+                  onChange={e => setSaveCta(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-medium focus:outline-none focus:ring-2 focus:ring-rose-500"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSaveModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-xs shadow-lg shadow-rose-900/40 flex items-center gap-1.5 transition-transform hover:scale-105"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  🚀 Simpan ke Pipeline Konten Campaign
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

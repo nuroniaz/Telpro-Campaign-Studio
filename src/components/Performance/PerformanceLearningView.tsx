@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { NavTab } from '../Sidebar';
+import { RbacBanner } from '../Common/RbacBanner';
 import {
   BarChart3,
   TrendingUp,
@@ -55,14 +56,17 @@ export const PerformanceLearningView: React.FC<PerformanceLearningViewProps> = (
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-3">
-        <div>
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-indigo-400" />
-            Performance Evaluation, Content Memory & Management Report
-          </h1>
-          <p className="text-xs text-slate-400 mt-0.5">Analisis predicted vs actual, continuous learning framework (CONTINUE/STOP/START/TEST), & laporan keputusan eksekutif</p>
+      <div className="space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-3">
+          <div>
+            <h1 className="text-xl font-bold text-white flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-indigo-400" />
+              Performance Evaluation, Content Memory & Management Report
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">Analisis predicted vs actual, continuous learning framework (CONTINUE/STOP/START/TEST), & laporan keputusan eksekutif</p>
+          </div>
         </div>
+        <RbacBanner moduleName="Performance & Learning" />
       </div>
 
       {/* Tab 1: Kinerja Konten */}
@@ -71,19 +75,19 @@ export const PerformanceLearningView: React.FC<PerformanceLearningViewProps> = (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
               <span className="text-slate-400 block mb-1">Total Reach & Impressions:</span>
-              <div className="text-xl font-bold text-white">{activeMetric?.reach.toLocaleString()} / {activeMetric?.impressions.toLocaleString()}</div>
+              <div className="text-xl font-bold text-white">{(activeMetric?.reach ?? 0).toLocaleString()} / {(activeMetric?.impressions ?? 0).toLocaleString()}</div>
             </div>
             <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
               <span className="text-slate-400 block mb-1">CTR Rata-rata:</span>
-              <div className="text-xl font-bold text-emerald-400">{activeMetric?.ctr}%</div>
+              <div className="text-xl font-bold text-emerald-400">{activeMetric?.ctr ?? 0}%</div>
             </div>
             <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
               <span className="text-slate-400 block mb-1">WA Clicks / Chat Initiated:</span>
-              <div className="text-xl font-bold text-cyan-400">{activeMetric?.waClicks} / {activeMetric?.chatInitiated}</div>
+              <div className="text-xl font-bold text-cyan-400">{activeMetric?.waClicks ?? 0} / {activeMetric?.chatInitiated ?? 0}</div>
             </div>
             <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
               <span className="text-slate-400 block mb-1">Cost Per Lead (CPL):</span>
-              <div className="text-xl font-bold text-rose-400">Rp {activeMetric?.cpl.toLocaleString()}</div>
+              <div className="text-xl font-bold text-rose-400">Rp {(activeMetric?.cpl ?? 0).toLocaleString()}</div>
             </div>
           </div>
         </div>
