@@ -1,0 +1,106 @@
+<svg viewBox="0 0 1000 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Left Red Wing Gradient: Vibrant Scarlet Red to Warm Red-Orange -->
+    <linearGradient id="sparkRedGrad" x1="40" y1="360" x2="560" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#DF0820" />
+      <stop offset="30%" stop-color="#E71327" />
+      <stop offset="70%" stop-color="#F32A15" />
+      <stop offset="100%" stop-color="#FA4A0E" />
+    </linearGradient>
+
+    <!-- Top-Right Wing Gradient: Deep Orange to Bright Golden Yellow -->
+    <linearGradient id="sparkOrangeGrad" x1="580" y1="560" x2="975" y2="30" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FA4400" />
+      <stop offset="30%" stop-color="#FF6600" />
+      <stop offset="65%" stop-color="#FFA200" />
+      <stop offset="100%" stop-color="#FFC800" />
+    </linearGradient>
+
+    <!-- Bottom Ventral Fin Gradient: Medium Slate Grey to Dark Charcoal Grey -->
+    <linearGradient id="sparkGreyGrad" x1="300" y1="640" x2="580" y2="980" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#8B9197" />
+      <stop offset="45%" stop-color="#6B7177" />
+      <stop offset="100%" stop-color="#474D53" />
+    </linearGradient>
+  </defs>
+
+  <!-- 1. Bottom Ventral Fin (Metallic Slate Grey) -->
+  <path
+    id="sparkGreyFin"
+    d="M 298 638
+       C 365 605, 475 528, 575 422
+       C 608 468, 648 518, 692 578
+       C 670 660, 640 762, 595 868
+       C 572 922, 552 966, 542 976
+       C 538 978, 532 972, 526 952
+       C 485 836, 452 760, 400 704
+       C 356 658, 314 644, 298 638 Z"
+    fill="url(#sparkGreyGrad)"
+  />
+
+  <!-- 2. Top-Right Orange/Yellow Main Body (Inner Triangle) -->
+  <path
+    id="sparkOrangeInner"
+    d="M 578 416
+       C 584 328, 578 230, 554 138
+       C 610 118, 668 98, 725 76
+       C 756 182, 736 292, 676 366
+       C 636 410, 598 418, 578 416 Z"
+    fill="url(#sparkOrangeGrad)"
+  />
+
+  <!-- 3. Top-Right Orange/Yellow Outer Wingtip & Crescent -->
+  <path
+    id="sparkOrangeOuter"
+    d="M 730 74
+       C 785 60, 870 40, 972 26
+       C 978 32, 962 68, 932 138
+       C 876 270, 800 422, 692 578
+       C 688 568, 685 538, 692 498
+       C 740 368, 796 238, 756 124
+       C 746 96, 738 82, 730 74 Z"
+    fill="url(#sparkOrangeGrad)"
+  />
+
+  <!-- 4. Left Red Wing (Main Body + Lower Lobe) -->
+  <path
+    id="sparkRedWing"
+    d="M 26 370
+       C 24 356, 38 342, 60 326
+       C 145 262, 296 178, 456 126
+       C 498 112, 532 118, 545 133
+       C 568 214, 578 308, 578 416
+       C 525 454, 470 494, 416 532
+       C 410 536, 405 533, 407 518
+       C 416 464, 408 424, 360 394
+       C 285 348, 160 358, 48 382
+       C 32 386, 26 380, 26 370 Z"
+    fill="url(#sparkRedGrad)"
+  />
+
+  <!-- 5. Sweeping White Slicing Crescent across Red Wing and into Orange Wing -->
+  <path
+    id="sparkWhiteRibbon1"
+    d="M 188 358
+       C 265 340, 375 344, 480 370
+       C 540 386, 570 404, 578 416
+       C 646 368, 722 278, 756 124
+       C 750 144, 715 258, 646 348
+       C 585 428, 520 424, 430 396
+       C 330 366, 240 364, 188 358 Z"
+    fill="#FFFFFF"
+  />
+
+  <!-- 6. Dividing White Channel between Red, Orange and Grey -->
+  <path
+    id="sparkWhiteRibbon2"
+    d="M 545 133
+       C 562 128, 570 138, 575 158
+       C 585 238, 592 328, 578 416
+       C 525 458, 420 538, 298 638
+       C 318 632, 434 528, 514 448
+       C 560 404, 565 318, 555 238
+       C 550 188, 546 148, 545 133 Z"
+    fill="#FFFFFF"
+  />
+</svg>

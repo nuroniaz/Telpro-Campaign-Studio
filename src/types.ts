@@ -1,13 +1,41 @@
 export type UserRole =
+  | 'ROLE_REGIONAL_CREATOR'
   | 'ROLE_MARCOM_CREATOR'
-  | 'ROLE_ANALYST_QA'
-  | 'ROLE_PUBLISHER'
-  | 'ROLE_MANAGER_MARKETING'
-  | 'ROLE_VP_MARKETING'
+  | 'ROLE_CORCOMM_CREATOR'
+  | 'ROLE_JOINT_REVIEWER'
   | 'ROLE_VP_CORSEC'
   | 'ROLE_FINAL_APPROVER'
-  | 'ROLE_MANAGEMENT_VIEWER'
-  | 'ROLE_SYSTEM_ADMIN';
+  | 'ROLE_PERFORMANCE_ANALYST'
+  | 'ROLE_SYSTEM_ADMIN'
+  // Legacy aliases for backward compatibility
+  | 'ROLE_ANALYST_QA'
+  | 'ROLE_MANAGER_MARKETING'
+  | 'ROLE_VP_MARKETING'
+  | 'ROLE_PUBLISHER'
+  | 'ROLE_MANAGEMENT_VIEWER';
+
+export type UserPermission =
+  | 'CONTENT_PLANNER_OWNER'
+  | 'CREATE_CONTENT'
+  | 'EDIT_CONTENT'
+  | 'USE_AI_STUDIO'
+  | 'VIEW_CALENDAR'
+  | 'EDIT_CALENDAR'
+  | 'CURATE_REGIONAL_SUBMISSION'
+  | 'SUBMIT_CONTENT_REVIEW'
+  | 'REGIONAL_SUBMISSION_CREATE'
+  | 'REGIONAL_SUBMISSION_EDIT'
+  | 'VIEW_REGIONAL_PERFORMANCE'
+  | 'PARTICIPATE_EDITORIAL_PLANNING'
+  | 'REVIEW_PLANNER_STRUCTURE'
+  | 'CORCOMM_TAXONOMY_INPUT'
+  | 'JOINT_REVIEW_EXECUTE'
+  | 'VP_CORSEC_APPROVAL'
+  | 'FINAL_CONTENT_APPROVAL'
+  | 'VIEW_NATIONAL_ANALYTICS'
+  | 'MANAGE_SYSTEM'
+  | 'MANAGE_TAXONOMY'
+  | 'PUBLISH_CONTENT';
 
 export interface UserProfile {
   id: string;
@@ -17,6 +45,9 @@ export interface UserProfile {
   title: string;
   businessUnit: string;
   avatarUrl?: string;
+  permissions?: UserPermission[];
+  regionalUnit?: string;
+  isContentPlannerOwner?: boolean;
 }
 
 export type IntegrationStatus = 'SIMULATED' | 'CONNECTED' | 'DEGRADED' | 'ERROR' | 'STALE' | 'DISABLED';
@@ -78,6 +109,12 @@ export interface Trend {
   audioRightsStatus?: AudioRightsStatus;
   publishingWindow: string;
   expirationDate: string;
+  rank?: number;
+  sector?: string;
+  imageUrl?: string;
+  growthRate?: string;
+  volumeMetric?: string;
+  categoryLabel?: string;
 }
 
 export interface EventItem {
@@ -119,6 +156,18 @@ export interface Opportunity {
 }
 
 export type ContentStatus =
+  // Standard Lifecycle V1
+  | 'IDEA'
+  | 'PLANNED'
+  | 'IN PRODUCTION'
+  | 'IN REVIEW'
+  | 'APPROVED'
+  | 'SCHEDULED'
+  | 'PUBLISHED'
+  | 'REVISION'
+  | 'REJECTED'
+  | 'CANCELLED'
+  // Legacy aliases for backward compatibility
   | 'Idea'
   | 'Draft'
   | 'AI-Assisted Draft'
@@ -134,6 +183,9 @@ export type ContentStatus =
   | 'Published'
   | 'Rejected';
 
+export type ContentOwner = 'Regional' | 'Marcomm' | 'Corcomm' | 'Joint Collaboration';
+export type ContentPriority = 'Critical' | 'High' | 'Medium' | 'Low';
+
 export interface ContentItem {
   id: string;
   campaignId: string;
@@ -142,13 +194,217 @@ export interface ContentItem {
   objective: string;
   audience: string;
   platform: string;
-  format: 'Carousel' | 'Reels/Shorts' | 'Infographic' | 'Article' | 'Video Storyboard';
+  format: 'Carousel' | 'Reels/Shorts' | 'Infographic' | 'Article' | 'Video Storyboard' | string;
   status: ContentStatus;
   pic: string;
   currentVersionId: string;
   publishedUrl?: string;
   scheduledAt?: string;
   publishedAt?: string;
+
+  // 4-Section Content Planner Structure (Single Source of Truth)
+  // Section A: STRATEGY
+  campaignProgram?: string;
+  primaryObjective?: string;
+  targetAudience?: string;
+  contentPillar?: string;
+  keyMessage?: string;
+
+  // Section B: CONTENT
+  topicIdea?: string;
+  contentFormat?: string;
+  channel?: string;
+  cta?: string;
+  ctaTrackingLink?: string;
+  targetPropertyAsset?: string;
+  sourceReference?: string;
+
+  // Section C: EXECUTION
+  contentOwner?: ContentOwner;
+  picName?: string;
+  targetPublishDate?: string;
+  priority?: ContentPriority;
+  // Conditional Regional Fields (when contentOwner === 'Regional')
+  regionalUnit?: string;
+  picRegional?: string;
+  activityProgram?: string;
+  location?: string;
+  activityDate?: string;
+  supportingAsset?: string;
+  requestedPublishDate?: string;
+
+  // Section D: READINESS
+  supportingAssetStatus?: string;
+  supportingDataEvidence?: string;
+  readinessNotes?: string;
+
+  // Joint Review & Governance State
+  marcommReviewStatus?: 'Pending' | 'Reviewed';
+  marcommReviewer?: string;
+  marcommReviewedAt?: string;
+  corcommReviewStatus?: 'Pending' | 'Reviewed';
+  corcommReviewer?: string;
+  corcommReviewedAt?: string;
+  reviewChecklist?: {
+    brandSafety: boolean;
+    factCheck: boolean;
+    claimCheck: boolean;
+    corporateTone: boolean;
+  };
+  vpCorsecApprovalStatus?: 'Pending' | 'Approved' | 'Revision Required' | 'Rejected';
+  vpCorsecApprover?: string;
+  vpCorsecApproved?: boolean;
+  vpCorsecApprovedAt?: string;
+  finalApprovalStatus?: 'Pending' | 'Approved' | 'Revision Required' | 'Rejected';
+  finalApprover?: string;
+  finalApproved?: boolean;
+  finalApprovedAt?: string;
+  rejectionReason?: string;
+  governanceComments?: GovernanceComment[];
+
+  // Post-Publish Closed Loop Flow (Monitoring -> Optimization/Best Practice -> Report -> Monthly Evaluation -> Planning)
+  postPublish?: PostPublishData;
+}
+
+export interface GovernanceComment {
+  id: string;
+  authorName: string;
+  authorRole: string;
+  authorTitle?: string;
+  content: string;
+  createdAt: string;
+  type: 'joint_review' | 'vp_corsec_audit' | 'dirut_directive' | 'creator_response';
+  category?: string; // For VP Corsec: e.g. "Brand Safety & Reputasi Holding", "Aspek Hukum & HAKI", "Audit Klaim SLA & Fakta", "Penyelarasan Kebijakan BUMN"
+  urgency?: 'Minor Redaksional' | 'Wajib Penyesuaian' | 'Blocker Kepatuhan';
+  directiveChip?: string; // For Dirut: e.g. "👍 Narasi Tajam, Lanjutkan", "🎯 Tekankan Nilai Efisiensi B2B", "⏱️ Tayangkan Momen Jam Kerja", "💡 Sederhanakan Bahasa"
+}
+
+export type PostPublishStage =
+  | 'MONITORING'
+  | 'AMPLIFICATION'
+  | 'BEST_PRACTICE'
+  | 'RECORDED_FOR_REPORT'
+  | 'MONTHLY_EVALUATION'
+  | 'CLOSED_LOOP_COMPLETED';
+
+export interface PostPublishData {
+  stage: PostPublishStage;
+  targetAccount?: '@telprodico' | '@telkomproperty';
+  publishedAt?: string;
+  metrics: {
+    impressions: number;
+    reach: number;
+    engagementRate: number; // e.g. 4.8 for 4.8%
+    inboundLeads: number;   // Leads only, no sales
+    linkClicks: number;
+    saveRate: number;
+    shares: number;
+    comments: number;
+  };
+  optimizationNeeded?: boolean;
+  amplificationTactics?: {
+    storyRepost: boolean;
+    boostAds: boolean;
+    buzzComments: boolean;
+    budgetEstimate?: number;
+    notes?: string;
+    startedAt?: string;
+  };
+  bestPracticeNotes?: string;
+  isDocumentedBestPractice?: boolean;
+  recordedInReport?: boolean;
+  recordedAt?: string;
+  monthlyEvaluation?: {
+    evaluatedAt?: string;
+    strategyDecision?: 'KEEP_CURRENT' | 'TWEAK_STRATEGY';
+    tweakNotes?: string;
+    nextMonthAction?: string;
+    evaluatedBy?: string;
+  };
+}
+
+export type RegionalSubmissionStatus =
+  | 'REGIONAL DRAFT'
+  | 'SUBMITTED TO MARCOMM'
+  | 'REVISION REQUESTED'
+  | 'ACCEPTED'
+  | 'HELD'
+  | 'REJECTED';
+
+export interface RegionalSubmission {
+  id: string;
+  regional: string;
+  topic: string;
+  activity: string;
+  location?: string;
+  activityDate?: string;
+  requestedPublishDate?: string;
+  picRegional: string;
+  supportingAssetStatus?: string;
+  supportingAssetUrl?: string;
+  supportingDocumentName?: string;
+  submissionDate?: string;
+  submittedAt?: string;
+  currentStatus: RegionalSubmissionStatus;
+  revisionNotes?: string;
+  contentPillarSuggestion?: string;
+  targetAudience?: string;
+  convertedContentId?: string;
+  submissionTrack?: 'MONTHLY_AGENDA' | 'FAST_TRACK_URGENT' | 'COMMERCIAL_PROMO';
+  targetPropertyAsset?: string;
+  brandTarget?: '@telprodico' | '@telkomproperty' | 'MARCOMM_CHOICE';
+  editorialSlotStatus?: 'QUEUED_FOR_MEETING' | 'ALLOCATED_TO_SLOT' | 'BUFFER_READY';
+  aiAssisted?: boolean;
+  trendAngle?: string;
+  recommendedFormat?: string;
+  shotList?: string[];
+  captionDraft?: string;
+  corporateSafetyGuardrails?: string[];
+  marcommAlignmentNote?: string;
+  storyPackage?: {
+    hook: string;
+    interactiveStickers: string[];
+    textOverlay: string;
+    visualPrompt: string;
+  };
+  feedPackage?: {
+    hookHeadline: string;
+    carouselSlides: string[];
+    captionDraft: string;
+  };
+  reelsPackage?: {
+    threeSecHook: string;
+    storyboard: { timestamp: string; visual: string; audioAction: string }[];
+    recommendedAudioMood: string;
+    captionDraft: string;
+  };
+}
+
+export interface MasterTaxonomy {
+  campaigns: string[];
+  objectives: string[];
+  audienceCategories: string[];
+  contentPillars: string[];
+  formats: string[];
+  channels: string[];
+  priorities: string[];
+}
+
+export type PlannerStructureStatus = 'DRAFT STRUCTURE' | 'CORCOMM REVIEW' | 'ACTIVE' | 'PENDING' | 'REJECTED';
+
+export interface PlannerStructureChangeRequest {
+  id: string;
+  requestedBy?: string;
+  proposedBy?: string;
+  requestedAt: string;
+  title: string;
+  description?: string;
+  proposedChanges?: string;
+  targetSection?: string;
+  status: PlannerStructureStatus;
+  corcommReviewer?: string;
+  corcommComment?: string;
+  reviewedAt?: string;
 }
 
 export interface ContentVersion {
@@ -192,6 +448,7 @@ export type ApprovalStage =
   | '03. Manager Marketing Review'
   | '04. VP Marketing Review'
   | '05. VP Corsec Review'
+  | '06. Plt. Direktur Utama Approval'
   | '06. Direktur Utama Approval'
   | '07. Publisher Execution'
   | 'Fact & Evidence Check'
@@ -251,10 +508,10 @@ export const APPROVAL_HIERARCHY: ApprovalHierarchyStep[] = [
   },
   {
     step: 6,
-    stage: '06. Direktur Utama Approval',
-    label: '6. Direktur Utama',
+    stage: '06. Plt. Direktur Utama Approval',
+    label: '6. Plt. Dirut',
     role: 'ROLE_FINAL_APPROVER',
-    roleLabel: 'FINAL_APPROVER (DIRUT)',
+    roleLabel: 'PLT_DIRUT',
     description: 'Plt. Direktur Utama persetujuan Eksekutif tertinggi'
   },
   {
@@ -308,6 +565,8 @@ export interface AuditEvent {
   aiRunId?: string;
   contentVersionId?: string;
   sourceSystem: string;
+  userPermission?: string;
+  revisionNote?: string;
 }
 
 export interface LeadFeedback {
@@ -405,7 +664,7 @@ export interface Storyboard {
 }
 
 export type VideoSourceMode = 'Text-to-Video' | 'Image-to-Video' | 'Storyboard-to-Video' | 'Hybrid Real Asset + AI' | 'Real Footage';
-export type MediaProvider = 'Gemini / Imagen 3' | 'Veo AI Video Router' | 'ElevenLabs Voice Router' | 'TELPRO Real Asset Repository';
+export type MediaProvider = 'Gemini / Imagen 3' | 'Veo AI Video Router' | 'ElevenLabs Voice Router' | 'TELPRO Real Asset Repository' | 'TelkomProperty Real Asset Repository';
 
 export interface VideoScene {
   id: string;
